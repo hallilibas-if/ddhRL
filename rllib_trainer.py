@@ -26,11 +26,13 @@ config = ppo.DEFAULT_CONFIG.copy()
 config.update(
     {
     # The batch size collected for each worker
-    "rollout_fragment_length": 1000,
+    "rollout_fragment_length": 16,
     # Can be "complete_episodes" or "truncate_episodes"
-    "batch_mode": "complete_episodes",
+    "batch_mode": "truncate_episodes",
+    "HORIZON": 64,
     "simple_optimizer": True,
     "framework": "tf2",
+    "disable_env_checking":True
     })
 
 

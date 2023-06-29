@@ -30,8 +30,6 @@ def _tf_build_networks(configuration):
 
     # DPC Feature Extraction
 
-
-
     #dpc_encoder = DPCEncoderTF(sample_size=128, network=configuration['RESNET_VERSION'])
     x3d_onnx = onnx.load("/home/home/code/deeprl-for-autonomous-driving/trained_models/onnxModels/x3d.onnx")
     # Import the ONNX mopdel to Tensorflow
@@ -40,7 +38,7 @@ def _tf_build_networks(configuration):
 
     actor_critic_input_shape = (1, 1, 4, 4, 432) # zuvor (1, 1, 2, 2, 2048) 
     print("Shared Output Shape: ", actor_critic_input_shape) # for DPC is (1, 1, 8, 8, 128)
-
+    print("Shawan: ", configuration)
     # PPO Actor and Critic:
 
     # PPO Actor and Critic Shared Layers

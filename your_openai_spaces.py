@@ -19,42 +19,20 @@ from train_constants import NUM_OCEAN_FEATURES, NUM_CHICKENS, NUM_DIRECTIONS
 
 # 10 chickens follow the OCEAN model of personality
 # I think it has no less validity here than in many applications
-chicken_ocean_space = spaces.Box(
-            shape=(NUM_CHICKENS,NUM_OCEAN_FEATURES),
-            dtype=np.float,
-            low=0.0,
-            high=1.0)
-
-chicken_position_space = spaces.Box(
-            shape=(NUM_CHICKENS,2),
-            dtype=np.float,
-            low=0.0,
-            high=1.0)
-
-robot_position_space = spaces.Box(
-            shape=(2,),
-            dtype=np.float,
-            low=0.0,
-            high=1.0)
-
-robot_ocean_space = spaces.Box(
-            shape=(NUM_OCEAN_FEATURES,),
-            dtype=np.float,
-            low=0.0,
-            high=1.0)
-
-high_level_obs_space = spaces.Dict({
-        'chicken_oceans': chicken_ocean_space,
-        'chicken_positions': chicken_position_space,
-        'robot_ocean': robot_ocean_space,
-        'robot_position': robot_position_space,
-})
+high_level_obs_space = spaces.Box(
+            low=-1,
+            high=1,
+            shape=(128, 128, 4),
+            dtype=np.float32
+        )  # RGB image from front camera
 
 # At the low level, you don't care about OCEAN, you've already chosen your chicken
-low_level_obs_space = spaces.Dict({
-        'robot_position': robot_position_space,
-        'chicken_positions': chicken_position_space,
-})
+low_level_obs_space =  spaces.Box(
+            low=-1,
+            high=1,
+            shape=(128, 128, 4),
+            dtype=np.float32
+        )  # RGB image from front camera
 
 
 #************************************************************
@@ -62,7 +40,13 @@ low_level_obs_space = spaces.Dict({
 #************************************************************
 
 # Which chicken to choose
-high_level_action_space = spaces.Discrete(NUM_CHICKENS)
+high_level_action_space = spaces.Box(
+            np.array([-1]),  #np.array([-1, -1]),
+            np.array([+1]),  #np.array([+1, +1]),
+            dtype=np.float32)
 
 # go 8 directions N, NE, E, SE, S, SW, W, NW
-low_level_action_space = spaces.Discrete(NUM_DIRECTIONS)
+low_level_action_space = spaces.Box(
+            np.array([-1]),  #np.array([-1, -1]),
+            np.array([+1]),  #np.array([+1, +1]),
+            dtype=np.float32)
