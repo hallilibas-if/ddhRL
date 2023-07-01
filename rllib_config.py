@@ -9,7 +9,7 @@ from ray.rllib.models import ModelCatalog
 from CustomModel import CustomTFModel
 from ray.rllib.models.tf.tf_action_dist import DiagGaussian
 from environments.carla import carlaSimulatorInterfaceEnv
-from train_constants import YOUR_ROOT
+from train_constants import YOUR_ROOT, PATH_ENCODER
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)
@@ -68,6 +68,7 @@ def get_multiagent_policies() -> Dict[str,PolicySpec]:
 
 # see https://github.com/ray-project/ray/blob/releases/1.10.0/rllib/agents/trainer.py
 nn_config_high = {
+        "offlineEncoder" : PATH_ENCODER,
         "NUM_DPC_FRAMES": 4,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,
@@ -95,6 +96,7 @@ nn_config_high = {
 }
 
 nn_config_low = {
+        "offlineEncoder" : PATH_ENCODER,
         "NUM_DPC_FRAMES": 4,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,

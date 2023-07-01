@@ -34,15 +34,9 @@ def _tf_build_networks(configuration):
 	The network structure is explained in Kemal's thesis.
 	"""
 
+    r18_onnx = onnxruntime.InferenceSession(configuration["offlineEncoder"], None)
+    print( configuration["offlineEncoder"] )
  
-    #r18_onnx = onnx.load("/home/shawan/Desktop/slowfast-model-load/onnxModels/r18_moco.onnx")
-    #r18_onnx = prepare(r18_onnx)
-    model_encoder_path = "/home/shawan/Desktop/slowfast-model-load/onnxModels/yolo-intermediary.onnx"
-    r18_onnx = onnxruntime.InferenceSession(model_encoder_path, None)
-    print( model_encoder_path )
- 
-
-
     actor_critic_input_shape = (1,1, 4, 4, 512) # zuvor  für DPC(1, 1, 2, 2, 2048), wenn MoCo mit 128x128 dann (1, 1, 4, 4, 432)  
     print("Shared Output Shape: ", actor_critic_input_shape) # for DPC is (1, 1, 8, 8, 128)
 
