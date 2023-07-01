@@ -2,10 +2,10 @@ import ray
 from ray import tune
 from rllib_trainer import YourTrainer, config
 from rllib_config import cust_config
-from train_constants import YOUR_ROOT
 from time import sleep
 import numpy as np
 import os
+from train_constants import YOUR_ROOT
 
 #configs
 config.update(cust_config)
@@ -18,6 +18,7 @@ NUM_CPUS=6
 OBJECT_STORE_MEMORY=30000000000 #30GB
 RUN_WITH_TUNE = True
 NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
+
 
 print(ray.init(num_gpus=NUM_GPUS,
             num_cpus=NUM_CPUS,
@@ -88,25 +89,8 @@ sard_buffer=buffer_com.options(name="carla_com",max_concurrency=2*NUM_AGENTS).re
 
 # Tune is the system for keeping track of all of the running jobs, originally for
 # hyperparameter tuning
-if RUN_WITH_TUNE:
-
-    tune.registry.register_trainable(YOUR_ROOT, YourTrainer)
-    stop = {
-            "training_iteration": NUM_ITERATIONS  # Each iteration is some number of episodes
+tune.registry.register_trainable(YOUR_ROOT, YourTrainer)
+stop = {
+        "training_iteration": NUM_ITERATIONS  # Each iteration is some number of episodes
         }
-    results = tune.run(YOUR_ROOT, stop=stop, config=config, verbose=1, checkpoint_freq=10)
-
-    # You can just do PPO or DQN but we wanted to show how to customize
-    #results = tune.run("PPO", stop=stop, config=config, verbose=1, checkpoint_freq=10)
-
-else:
-    from CARLA_environment import YourEnvironment
-    trainer = YourTrainer(config, env=YourEnvironment)
-
-    # You can just do PPO or DQN but we wanted to show how to customize
-    #from ray.rllib.agents.ppo import PPOTrainer
-    #trainer = PPOTrainer(config, env=YourEnvironment)
-
-    trainer.train()
-
-    # Results at YOUR_ROOT/YourTrainer_YourEnvironment_YYYY_MM_DD_SS-NN-XXXXXXXXX
+results = tune.run(YOUR_ROOT, stop=stop, config=config, verbose=1, checkpoint_freq=10)

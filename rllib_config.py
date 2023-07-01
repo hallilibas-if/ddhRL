@@ -13,7 +13,8 @@ from train_constants import YOUR_ROOT
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)
-
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
     """
     Maps agent_id to policy_id

@@ -1,28 +1,17 @@
 import logging
-from mimetypes import init
-from queue import Empty
-from typing import Callable, Optional, Tuple
+from typing import Tuple
 
-import os
-import datetime
-import gym
-import csv
 import cv2
 import numpy as np
 from gym import spaces
-from gym.utils import seeding
-from time import sleep
-import atexit
 
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
-import ray
+from ray.rllib.utils.typing import MultiAgentDict
 logger = logging.getLogger(__name__)
 from environments.carla.autonomous_agent import Agent
 
 NUM_AGENTS = 4
-MIMIC = False
+
 # Care for the following lines in rollout_worker...
 # if not isinstance(real_env, (ExternalEnv, ExternalMultiAgentEnv)):
 #     logger.info(
@@ -106,20 +95,6 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
 
     def close(self):
         pass
-
-    @staticmethod
-    def get_policy_configs(config) -> Tuple[dict, Callable[[AgentID], PolicyID]]:
-        policies = {
-            "default_policy": PolicySpec(
-                observation_space=CONFIG["observation_space"],
-                action_space=CONFIG["action_space"]),
-
-        }
-        
-        def policy_mapping_fn(agent_id, episode, worker, **kwargs):
-            return "default_policy"
-
-        return policies, policy_mapping_fn
 
 def showImage(input_data, figureName='map'):
     #cv2.imshow('map', np.uint8(input_data))

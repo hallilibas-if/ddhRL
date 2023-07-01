@@ -12,28 +12,15 @@ import numpy as np
 from gym import spaces
 from gym.utils import seeding
 from time import sleep
-import atexit
 
-from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
+
+
 import ray
 logger = logging.getLogger(__name__)
 
 
-NUM_AGENTS = 2
+
 MIMIC = False
-# Care for the following lines in rollout_worker...
-# if not isinstance(real_env, (ExternalEnv, ExternalMultiAgentEnv)):
-#     logger.info(
-#         "The env you specified is not a supported (sub-)type of "
-#         "ExternalEnv. Attempting to convert it automatically to "
-#         "ExternalEnv.")
-#
-#     if isinstance(real_env, MultiAgentEnv):
-#         external_cls = ExternalMultiAgentEnv
-#     else:
-#         external_cls = ExternalEnv
 
 class controlAgent():
     def __init__(self) -> None:
@@ -64,7 +51,7 @@ class Agent(gym.Env):
 
         #statistic cal.
         csv_path = 'route_statistics_' + str(self._id) + '_' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M") + '.csv' # add datetime just in case it is overwritten by a failed trial
-        self.file_path = os.path.join("/home/shawan/Desktop/Shawan/ddhRL/results", csv_path) #self.file_path = os.path.join("/home/shawan/Desktop/Shawan/ddhRL/results", csv_path)
+        self.file_path = os.path.join(config["experiment_path"], csv_path) #self.file_path = os.path.join("/home/shawan/Desktop/Shawan/ddhRL/results", csv_path)
         sleep(20)
         with open(self.file_path, 'w', encoding='UTF8') as f:
             writer = csv.writer(f)
