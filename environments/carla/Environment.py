@@ -21,7 +21,7 @@ import ray
 logger = logging.getLogger(__name__)
 from environments.carla.autonomous_agent import Agent
 
-NUM_AGENTS = 2
+NUM_AGENTS = 4
 MIMIC = False
 # Care for the following lines in rollout_worker...
 # if not isinstance(real_env, (ExternalEnv, ExternalMultiAgentEnv)):
@@ -36,19 +36,8 @@ MIMIC = False
 #         external_cls = ExternalEnv
 
 CONFIG = {
-    "action_space":
-        spaces.Box(
-            np.array([-1]),  #np.array([-1, -1]),
-            np.array([+1]),  #np.array([+1, +1]),
-            dtype=np.float32,
-        ),  # steering, throttle (+) / brake (-)
-    "observation_space":
-        spaces.Box(
-            low=-1,
-            high=1,
-            shape=(128, 128, 4),
-            dtype=np.float32
-        )  # RGB image from front camera
+    "action_space": spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32),  # steering, throttle (+) / brake (-)
+    "observation_space": spaces.Box(low=-5,high=5,shape=(128, 128, 4),dtype=np.float32)  # RGB image from front camera
 }
 
 

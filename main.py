@@ -10,20 +10,20 @@ import os
 #configs
 config.update(cust_config)
 config['num_workers'] = 0   # when running on a big machine or multiple machines can run more workers
+LOCAL_MODE = False # in local mode you can debug it. When False then agent is not finding ./results
 from environments.carla.Environment import NUM_AGENTS
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-NUM_GPUS=0
+NUM_GPUS=1
 NUM_CPUS=6
 OBJECT_STORE_MEMORY=30000000000 #30GB
 RUN_WITH_TUNE = True
-NUM_ITERATIONS = 500  # 500 results in Tensorboard shown with 500 iterations (about an hour)
+NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
 
-# noinspection PyUnresolvedReferences
-#ray.init(local_mode=True)  # in local mode you can debug it
 print(ray.init(num_gpus=NUM_GPUS,
             num_cpus=NUM_CPUS,
             object_store_memory=OBJECT_STORE_MEMORY,
-            namespace="rllib_carla"))
+            namespace="rllib_carla",
+            local_mode=LOCAL_MODE))
 
 
 @ray.remote(num_cpus=2)

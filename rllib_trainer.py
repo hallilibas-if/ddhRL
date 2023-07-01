@@ -16,8 +16,8 @@ from ray.rllib.execution.metric_ops import StandardMetricsReporting
 from ray.rllib.agents.ppo import ppo
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import TrainerConfigDict
-
-
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 # PPO default config builds on DEFAULT_CONFIG here
 # https://github.com/ray-project/ray/blob/releases/1.10.0/rllib/agents/trainer.py
 config = ppo.DEFAULT_CONFIG.copy()
@@ -26,13 +26,25 @@ config = ppo.DEFAULT_CONFIG.copy()
 config.update(
     {
     # The batch size collected for each worker
-    "rollout_fragment_length": 16,
+    "rollout_fragment_length": 64,
     # Can be "complete_episodes" or "truncate_episodes"
     "batch_mode": "truncate_episodes",
     "HORIZON": 64,
     "simple_optimizer": True,
     "framework": "tf2",
-    "disable_env_checking":True
+    "train_batch_size" : 640,
+    "disable_env_checking":True,
+    "num_sgd_iter" : 3,
+    "sgd_minibatch_size": 128,
+    "lr": 0.000005,
+    "no_done_at_end": False,
+    "preprocessor_pref": "deepmind",
+    "gamma" : 0.9,
+    "lambda" : 0.95,
+    "epsilon" : 0.1,
+    "entropy_coeff" : 0.0,
+    "kl_target" : 0.03,
+    "kl_coeff" : 0.3
     })
 
 

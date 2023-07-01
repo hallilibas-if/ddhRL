@@ -28,15 +28,16 @@ class CustomTFModel(TFModelV2):
 
         self.dpc_encoder, self.actor_critic_shared_model, self.actor_model, self.critic_model = build_networks(self.configuration)
         
+        self.input_name = self.dpc_encoder.get_inputs()[0].name
         #     logger.info("DPC Weights loaded from path: " + str(path))
         # else:
         #     logger.warn("No weights found to load from path: " + str(path))
 
-        self.save_dummy = tf.keras.Model([self.dpc_encoder, self.actor_critic_shared_model, self.actor_model, self.critic_model])
+        self.save_dummy = tf.keras.Model([self.dpc_encoder, self.actor_model, self.critic_model])
 
         self.num_frames = self.configuration['NUM_DPC_FRAMES']
 
-        for model in [self.actor_critic_shared_model, self.actor_model,
+        for model in [self.actor_model,
                       self.critic_model]:
             model.summary()
 
@@ -61,56 +62,88 @@ class CustomTFModel(TFModelV2):
         :param seq_lens: None
         :return: (ouputs, state), outsputs of size [BATCH, num_outputs]
         """
-        stacked_observations = input_dict["prev_n_obs"][:,:,:,:,0:3]
-        print("Shape of stacked obs: ", stacked_observations.shape)
-        inputs =  np.array(stacked_observations, dtype=np.float32) 
-        inputs = inputs.transpose(0, 4, 1, 2, 3)
-        print("Shape of stacked obs inside inputs: ", inputs.shape)
+  
+        #Get previous obs
+        stacked_observations = input_dict["prev_n_obs"][:,:,:,:,0:3] 
+        #print("Shape of stacked obs: ", stacked_observations.shape) #(32, 4, 128, 128, 3)
+        #inputs =  np.array(current_observation, dtype=np.float32)  
+        #inputs = inputs.transpose(0, 4, 1, 2, 3) # 0: BS , 1:T , 2:H , 3:W , 4:RGB
+        #print("Shape of stacked obs inside inputs: ", inputs.shape) #(32, 3, 4, 128, 128)
+
+        #Get current obs
+        current_obsRaw = np.expand_dims(input_dict["obs"], axis=1) #Before (32, 128, 128, 3) --> (32, 1, 128, 128, 3)
+        current_observation = current_obsRaw[:,:,:,:,0:3]  #(32, 128, 128, 3)
+        #print("Shape of stacked obs: ", current_observation.shape) #(32,1, 128, 128, 3)
+        inputs =  np.array(current_observation, dtype=np.float32)  
+        inputs = inputs.transpose(0, 4, 1, 2,3)
+        #print("Shape of stacked obs inside inputs: ", inputs.shape) #(32, 3, 1, 128, 128)
         #inputs = tf.cast(inputs, tf.float32)
-        
-        
-        stacked_scalar = input_dict["prev_n_obs"][:,:,:,:,-1]
-        #stacked_1_m = stacked_scalar[:,:,0:8,0:8] #ToDo Shawan:have to be dynamic! Here its hardcoded!
-        #stacked_2_m = stacked_scalar[:,:,8:16,8:16] #ToDo Shawan:have to be dynamic! Here its hardcoded!
-        
-        stacked_1 = stacked_scalar[:,:,0,0] #Road speed --> ToDo Shawan:have to be dynamic! Here its hardcoded! #(?,5)
-        stacked_2 = stacked_scalar[:,:,9,9] #Agent speed--> ToDo Shawan:have to be dynamic! Here its hardcoded! #(?,5)
- 
+
+        stacked_scalar_prev = input_dict["prev_n_obs"][:,:,:,:,-1] 
+        stacked_scalar = current_obsRaw[:,:,:,:,-1]
+
+        stacked_scalar = np.concatenate((stacked_scalar, stacked_scalar_prev), axis=1)
+
+        stacked_1_m = stacked_scalar[:,:,2:6,2:6] #ToDo Shawan:have to be dynamic! Here its hardcoded!
+        stacked_2_m = stacked_scalar[:,:,10:14,10:14] #ToDo Shawan:have to be dynamic! Here its hardcoded!
+        stacked_3_m = stacked_scalar[:,:,18:22,18:22] #ToDo Shawan:have to be dynamic! Here its hardcoded!
+
+        stacked_1_m = tf.cast(stacked_1_m, tf.float32)
+        stacked_2_m = tf.cast(stacked_2_m, tf.float32)
+        stacked_3_m = tf.cast(stacked_3_m, tf.float32)
+
+        print("stacked scalar: ",stacked_scalar.shape)
+        #print("prev actions: ", input_dict.keys() )
+        stacked_1 = stacked_scalar[:,:,2,2] #Road speed --> ToDo Shawan:have to be dynamic! Here its hardcoded! #(?,5)
+        stacked_2 = stacked_scalar[:,:,10,10] #Agent speed--> ToDo Shawan:have to be dynamic! Here its hardcoded! #(?,5)
+        stacked_3 = stacked_scalar[:,:,18,18]
         stacked_1 = tf.cast(stacked_1, tf.float32)
         stacked_2 = tf.cast(stacked_2, tf.float32)
+        stacked_3 = tf.cast(stacked_3, tf.float32)
 
-        #stacked_1_m = tf.cast(stacked_1_m, tf.float32)
-        #stacked_2_m = tf.cast(stacked_2_m, tf.float32)
 
-        #print("Shape of stacked_1 : ", stacked_1.shape)
+        for i in range(1):
+            input_raw= inputs[:,:,i,:,:]
+            input_raw = np.array(input_raw)          
+            #print("The model expects input shape: ", self.input_name.shape)
+            feature_map_one = self.dpc_encoder.run(None, {self.input_name: input_raw})[-1]
+            feature_map_one = feature_map_one.transpose(0,3,2,1)
+            print("Shape of the encoder output2: ", np.array(feature_map_one).shape) #(1, 1, 4, 4, 512) 
+            if i>0:
+                feature_map = np.concatenate((feature_map, feature_map_one), axis=-1)
+            else:
+                feature_map = feature_map_one
 
-        #print("Batch size stacked_inputs: ", input_dict["prev_n_obs"].shape) #(1, 5, 128, 128, 4)
-        #print("Batch size: ", stacked_observations.shape) #(1, 5, 128, 128, 3)
-        #feature_map = self.dpc_encoder(inputs[1, ...])
-        feature_map=self.dpc_encoder.run(inputs[None,:,:,:,:,:])
-        print("Shape of the encoder output: ", np.array(feature_map).shape) #(1, 1, 8, 8, 128)
-
-        feature_map = tf.squeeze(feature_map, [0])
-        feature_map = tf.squeeze(feature_map, [1])
-        print("Batch size feature_map: ", np.array(feature_map).shape) # (1, 8, 8, 128)
-        
-        
+        print("Batch size feature_map: ", np.array(feature_map).shape) # Attention! We need 4 dims ! -->(BS, 4, 4, 2048) 
+        print("Shape of stacked_1_m : ", stacked_1_m[:,0,:,:].shape)
+    
+        for x in range(len(stacked_1[0,:])):
+            stacked_1New = tf.expand_dims(stacked_1_m[:,x,:,:], axis=3)
+            stacked_2New = tf.expand_dims(stacked_2_m[:,x,:,:], axis=3)
+            stacked_3New = tf.expand_dims(stacked_3_m[:,x,:,:], axis=3)
+            #print("Iteration: ", x) # 0 ; 1;2;3;4 because 5 stacked images
+            #print("Shape of stacked_1New : ", stacked_1New.shape) # (1, 8, 8, 1)
+            feature_map = tf.concat([feature_map, stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New,stacked_2New,stacked_1New, stacked_3New],axis =-1)
+     
+        print("Batch size feature_map concat: ", feature_map.shape) #(1, 8, 8, 138) 
+    
         
         if self.configuration['FREEZE_CONV_LAYERS']:
             feature_map = tf.stop_gradient(feature_map)
+            print("Offline trained encoder is frozen!")
         stacked_1 = tf.stop_gradient(stacked_1)
         stacked_2 = tf.stop_gradient(stacked_2)
+        stacked_3 = tf.stop_gradient(stacked_3)
 
 
-        
-        shared_model_output = self.actor_critic_shared_model([feature_map])
-        #print("Shape of the shared model output: ", shared_model_output.shape)
+        #Here sensor fusion have to be happens ToDoShawan
+  
 
-        logits = tf.concat(self.actor_model([shared_model_output,stacked_1,stacked_2]), axis=1, name="Concat_logits")
+        logits = tf.concat(self.actor_model([feature_map,stacked_1,stacked_2, stacked_3]), axis=1, name="Concat_logits")
         #print("Actions: ", logits)
         #print("Output of the actor: ", logits.shape)
 
-        self.last_value_output = tf.reshape(self.critic_model([shared_model_output,stacked_1,stacked_2]), [-1])
+        self.last_value_output = tf.reshape(self.critic_model([feature_map,stacked_1,stacked_2, stacked_3]), [-1])
 
         return logits, []  # [] is empty state
 

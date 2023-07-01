@@ -18,9 +18,9 @@ def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
     """
     Maps agent_id to policy_id
     """
-    if agent_id ==0:
+    if agent_id <=3:
         return 'high_level_policy'
-    elif agent_id==1:
+    elif agent_id>=4:
         return 'low_level_policy'
     else:
         raise RuntimeError(f'Invalid agent_id: {agent_id}')
@@ -70,25 +70,25 @@ nn_config_high = {
         "NUM_DPC_FRAMES": 4,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,
-        "ACTOR_CNN_LAYERS": 1,
-        "ACTOR_CNN_FILTERS": [128, 64],
-        "ACTOR_CNN_KERNEL_SIZE": [3, 3, 3],
-        "ACTOR_CNN_STRIDES": [2, 1, 1],
+        "ACTOR_CNN_LAYERS": 2,
+        "ACTOR_CNN_FILTERS": [512, 512],
+        "ACTOR_CNN_KERNEL_SIZE": [2, 2, 3],
+        "ACTOR_CNN_STRIDES": [1, 1, 1],
         "ACTOR_FC_LAYERS": 2,
-        "ACTOR_FC_UNITS" : [512, 128],
+        "ACTOR_FC_UNITS" : [400, 100],
         "ACTOR_CNN_GRU_LAYERS": [0, 0, 0],
         "ACTOR_FC_GRU_LAYERS": [0, 0, 0],
         "ACTOR_GRU_STATE_SIZES": [512, 256, 128],
-        "CRITIC_CNN_LAYERS": 1,
-        "CRITIC_CNN_FILTERS": [128, 64],
-        "CRITIC_CNN_KERNEL_SIZE": [3, 3, 3],
-        "CRITIC_CNN_STRIDES": [2, 1, 1],
+        "CRITIC_CNN_LAYERS": 2,
+        "CRITIC_CNN_FILTERS": [512, 512],
+        "CRITIC_CNN_KERNEL_SIZE": [2, 2, 3],
+        "CRITIC_CNN_STRIDES": [1, 1, 1],
         "CRITIC_FC_LAYERS": 2,
-        "CRITIC_FC_UNITS" : [512, 128],
+        "CRITIC_FC_UNITS" : [400, 100],
         "CRITIC_CNN_GRU_LAYERS": [0, 0, 0],
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
-        "OUTPUTS": 1,
+        "OUTPUTS": 2,
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }
@@ -97,25 +97,25 @@ nn_config_low = {
         "NUM_DPC_FRAMES": 4,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,
-        "ACTOR_CNN_LAYERS": 1,
-        "ACTOR_CNN_FILTERS": [128, 64],
-        "ACTOR_CNN_KERNEL_SIZE": [3, 3, 3],
-        "ACTOR_CNN_STRIDES": [2, 1, 1],
+        "ACTOR_CNN_LAYERS": 2,
+        "ACTOR_CNN_FILTERS": [512, 512],
+        "ACTOR_CNN_KERNEL_SIZE": [2, 2, 3],
+        "ACTOR_CNN_STRIDES": [1, 1, 1],
         "ACTOR_FC_LAYERS": 2,
-        "ACTOR_FC_UNITS" : [512, 128],
+        "ACTOR_FC_UNITS" : [400, 100],
         "ACTOR_CNN_GRU_LAYERS": [0, 0, 0],
         "ACTOR_FC_GRU_LAYERS": [0, 0, 0],
         "ACTOR_GRU_STATE_SIZES": [512, 256, 128],
-        "CRITIC_CNN_LAYERS": 1,
-        "CRITIC_CNN_FILTERS": [128, 64],
-        "CRITIC_CNN_KERNEL_SIZE": [3, 3, 3],
-        "CRITIC_CNN_STRIDES": [2, 1, 1],
+        "CRITIC_CNN_LAYERS": 2,
+        "CRITIC_CNN_FILTERS": [512, 512],
+        "CRITIC_CNN_KERNEL_SIZE": [2, 2, 3],
+        "CRITIC_CNN_STRIDES": [1, 1, 1],
         "CRITIC_FC_LAYERS": 2,
-        "CRITIC_FC_UNITS" : [512, 128],
+        "CRITIC_FC_UNITS" : [400, 100],
         "CRITIC_CNN_GRU_LAYERS": [0, 0, 0],
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
-        "OUTPUTS": 1,
+        "OUTPUTS": 2,
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }
@@ -128,11 +128,11 @@ cust_config = {
         "batch_mode": "complete_episodes",
         "env": carlaSimulatorInterfaceEnv,
         "env_config": {
-            "OUTPUTS": 1,
+            "OUTPUTS": 2,
             "experiment_path": YOUR_ROOT
         },
         "framework": "tf2",
-        "eager_tracing": False,
+        "eager_tracing": False, #when True then problem with numpy passed an tf tensor ?
         "multiagent": {
             "policies": policies,
             "policy_mapping_fn": policy_map_fn,

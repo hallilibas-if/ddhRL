@@ -20,16 +20,16 @@ from train_constants import NUM_OCEAN_FEATURES, NUM_CHICKENS, NUM_DIRECTIONS
 # 10 chickens follow the OCEAN model of personality
 # I think it has no less validity here than in many applications
 high_level_obs_space = spaces.Box(
-            low=-1,
-            high=1,
+            low=-5,
+            high=5,
             shape=(128, 128, 4),
             dtype=np.float32
         )  # RGB image from front camera
 
 # At the low level, you don't care about OCEAN, you've already chosen your chicken
 low_level_obs_space =  spaces.Box(
-            low=-1,
-            high=1,
+            low=-5,
+            high=5,
             shape=(128, 128, 4),
             dtype=np.float32
         )  # RGB image from front camera
@@ -41,12 +41,16 @@ low_level_obs_space =  spaces.Box(
 
 # Which chicken to choose
 high_level_action_space = spaces.Box(
-            np.array([-1]),  #np.array([-1, -1]),
-            np.array([+1]),  #np.array([+1, +1]),
-            dtype=np.float32)
+            low=-1,
+            high=1,
+            shape=(2,),
+            dtype=np.float32
+        )  # RGB image from front camera
 
 # go 8 directions N, NE, E, SE, S, SW, W, NW
 low_level_action_space = spaces.Box(
-            np.array([-1]),  #np.array([-1, -1]),
-            np.array([+1]),  #np.array([+1, +1]),
-            dtype=np.float32)
+            low=-1,
+            high=1,
+            shape=(2,),
+            dtype=np.float32
+        )  # RGB image from front camera

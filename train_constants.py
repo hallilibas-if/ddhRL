@@ -14,4 +14,4 @@ TIMEOUT_REWARD = -1.0
 NUM_DIRECTIONS = 8
 TIMEOUT = 1000
 
-YOUR_ROOT = '/home/home/code/HDDRL/YourTrainer'
+YOUR_ROOT = './results'

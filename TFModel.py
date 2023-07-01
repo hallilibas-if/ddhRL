@@ -17,6 +17,12 @@ import tensorflow as tf
 from torch.autograd import Variable
 from onnx_tf.backend import prepare
 
+
+
+import numpy as np
+from onnx import numpy_helper
+import onnxruntime
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 warnings.filterwarnings('ignore')
 
@@ -28,24 +34,25 @@ def _tf_build_networks(configuration):
 	The network structure is explained in Kemal's thesis.
 	"""
 
-    # DPC Feature Extraction
+ 
+    #r18_onnx = onnx.load("/home/shawan/Desktop/slowfast-model-load/onnxModels/r18_moco.onnx")
+    #r18_onnx = prepare(r18_onnx)
+    model_encoder_path = "/home/shawan/Desktop/slowfast-model-load/onnxModels/yolo-intermediary.onnx"
+    r18_onnx = onnxruntime.InferenceSession(model_encoder_path, None)
+    print( model_encoder_path )
+ 
 
-    #dpc_encoder = DPCEncoderTF(sample_size=128, network=configuration['RESNET_VERSION'])
-    x3d_onnx = onnx.load("/home/home/code/deeprl-for-autonomous-driving/trained_models/onnxModels/x3d.onnx")
-    # Import the ONNX mopdel to Tensorflow
-    x3d_onnx = prepare(x3d_onnx)
-    #x3d_encoder = tf.saved_model.load("/home/shawan/Desktop/Shawan/deeprl-for-autonomous-driving/trained_models/x3d.pb/")
 
-    actor_critic_input_shape = (1, 1, 4, 4, 432) # zuvor (1, 1, 2, 2, 2048) 
+    actor_critic_input_shape = (1,1, 4, 4, 512) # zuvor  für DPC(1, 1, 2, 2, 2048), wenn MoCo mit 128x128 dann (1, 1, 4, 4, 432)  
     print("Shared Output Shape: ", actor_critic_input_shape) # for DPC is (1, 1, 8, 8, 128)
-    print("Shawan: ", configuration)
+
     # PPO Actor and Critic:
 
     # PPO Actor and Critic Shared Layers
 
-    actor_critic_feature_map_input = tf.keras.layers.Input(shape=[actor_critic_input_shape[2],
-																  actor_critic_input_shape[3],
-																  actor_critic_input_shape[4]]) # actor_critic_input_shape[4]+10]) 2*seq_length! Because after dpc there is no seq_length! Everything is only a big qubic!ToDo Shawan: Changed here to a dynamic way of implementation!
+    actor_critic_feature_map_input = tf.keras.layers.Input(shape=[actor_critic_input_shape[-3],
+																  actor_critic_input_shape[-2],
+																  actor_critic_input_shape[-1]+240]) # actor_critic_input_shape[4]+10]) 2*seq_length! Because after dpc there is no seq_length! Everything is only a big qubic!ToDo Shawan: Changed here to a dynamic way of implementation!
 
     layer = actor_critic_feature_map_input
     for i in range(configuration['SHARED_CNN_LAYERS']):
@@ -70,8 +77,9 @@ def _tf_build_networks(configuration):
                                                            actor_critic_shared_cnn_output.shape[2],
                                                            actor_critic_shared_cnn_output.shape[3]])
     
-    road_speed_map_input = tf.keras.layers.Input(shape=[4])
-    agent_speed_map_input = tf.keras.layers.Input(shape=[4])
+    road_speed_map_input = tf.keras.layers.Input(shape=[configuration['NUM_DPC_FRAMES']+1])
+    agent_speed_map_input = tf.keras.layers.Input(shape=[configuration['NUM_DPC_FRAMES']+1])
+    agent_action_map_input = tf.keras.layers.Input(shape=[configuration['NUM_DPC_FRAMES']+1])
 
     # Build lists of states, since we work with keras GRU cells
     # Since not every layer is stateful, we need only as many states as we have stateful layers
@@ -98,6 +106,7 @@ def _tf_build_networks(configuration):
                                                                                         configuration=configuration,
                                                                                         agent_speed=agent_speed_map_input, 
                                                                                         road_speed =road_speed_map_input,
+                                                                                        agent_actions=agent_action_map_input,
                                                                                         critic_cnn_gru_states=critic_cnn_gru_state_inputs,
                                                                                         critic_fc_gru_states=critic_fc_gru_state_inputs)
 
@@ -105,6 +114,7 @@ def _tf_build_networks(configuration):
                                                                                             configuration=configuration,
                                                                                             agent_speed=agent_speed_map_input, 
                                                                                             road_speed =road_speed_map_input,
+                                                                                            agent_actions=agent_action_map_input,
                                                                                             actor_cnn_gru_states=actor_cnn_gru_state_inputs,
                                                                                             actor_fc_gru_states=actor_fc_gru_state_inputs)
 
@@ -116,21 +126,21 @@ def _tf_build_networks(configuration):
     # Reduce our state inputs
     actor_cnn_gru_state_inputs = [i for i in actor_cnn_gru_state_inputs if i is not None]
     actor_fc_gru_state_inputs = [i for i in actor_fc_gru_state_inputs if i is not None]
-    actor = tf.keras.Model(inputs=[actor_feature_map_input, agent_speed_map_input, road_speed_map_input,actor_cnn_gru_state_inputs, actor_fc_gru_state_inputs],
+    actor = tf.keras.Model(inputs=[actor_feature_map_input, agent_speed_map_input, road_speed_map_input,agent_action_map_input,actor_cnn_gru_state_inputs, actor_fc_gru_state_inputs],
                            outputs=[action_layer, actor_gru_cnn_state_outputs, actor_gru_fc_state_outputs],
                            name='Actor_Model')
 
     # Reduce our state inputs
     critic_cnn_gru_state_inputs = [i for i in critic_cnn_gru_state_inputs if i is not None]
     critic_fc_gru_state_inputs = [i for i in critic_fc_gru_state_inputs if i is not None]
-    critic = tf.keras.Model([critic_feature_map_input,agent_speed_map_input, road_speed_map_input, critic_cnn_gru_state_inputs, critic_fc_gru_state_inputs],
+    critic = tf.keras.Model([critic_feature_map_input,agent_speed_map_input, road_speed_map_input, agent_action_map_input, critic_cnn_gru_state_inputs, critic_fc_gru_state_inputs],
                             [value, critic_gru_cnn_state_outputs, critic_gru_fc_state_outputs],
                             name='Critic_Model')
 
-    return x3d_onnx, actor_critic_shared, actor, critic
+    return r18_onnx, actor_critic_shared, actor, critic
 
 
-def _tf_build_actor_net(x, configuration, agent_speed, road_speed, actor_cnn_gru_states, actor_fc_gru_states):
+def _tf_build_actor_net(x, configuration, agent_speed, road_speed, agent_actions,actor_cnn_gru_states, actor_fc_gru_states):
     # These two lists tell us which layers should be stateful
     actor_rnn_cnn_layers = configuration.get("ACTOR_CNN_GRU_LAYERS") or [0] * 64
     actor_rnn_fc_layers = configuration.get("ACTOR_FC_GRU_LAYERS") or [0] * 64
@@ -155,11 +165,11 @@ def _tf_build_actor_net(x, configuration, agent_speed, road_speed, actor_cnn_gru
             x = tf.keras.layers.Conv2D(**actor_cnn_layer_params)(x)
 
     x = tf.keras.layers.Flatten()(x) #ToDo concatinate speed information
-    agent_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
-    road_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
-    add_both = tf.keras.layers.Concatenate(axis=-1)([road_speed,agent_speed])
-    dense_both = tf.keras.layers.Dense(units=32, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_both)
-    x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
+    #agent_speed = tf.keras.layers.Dense(units=4, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
+    #road_speed = tf.keras.layers.Dense(units=4, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
+    #add_both = tf.keras.layers.Concatenate(axis=-1)([road_speed,agent_speed])
+    #dense_both = tf.keras.layers.Dense(units=32, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_both)
+    #x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
     #print("Tief drinne shape: ",x.shape)
     
     # Append actor FC layers to graph
@@ -183,6 +193,15 @@ def _tf_build_actor_net(x, configuration, agent_speed, road_speed, actor_cnn_gru
             gru_fc_state_outputs.append(state)
         else:
             x = tf.keras.layers.Dense(**actor_layer_params)(x)
+    
+    agent_speed = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
+    road_speed = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
+    agent_actions = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_actions)
+
+    add_all = tf.keras.layers.Concatenate(axis=-1)([x,road_speed,agent_speed, agent_actions])
+    #x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
+    print("Tief drinne shape Actor: ",add_all.shape)
+    x = tf.keras.layers.Dense(units=50, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_all)         
     mean = tf.keras.layers.Dense(configuration["OUTPUTS"],
                                  activation=tf.nn.tanh,
                               name='ActorLayer_last_mean',
@@ -192,12 +211,21 @@ def _tf_build_actor_net(x, configuration, agent_speed, road_speed, actor_cnn_gru
                               name='ActorLayer_last_var',
                               kernel_initializer=normc_initializer(0.01),
                               kernel_regularizer=configuration['REGULARIZER'])(x)
+    
+    """
+    correlations = tf.keras.layers.Dense(configuration["OUTPUTS"] * (configuration["OUTPUTS"] - 1) / 2,
+                                         name='ActorLayer_last_correlations',
+                                         kernel_initializer=normc_initializer(0.01),
+                                         kernel_regularizer=configuration['REGULARIZER'])(x)
+    
+    x = tf.keras.layers.Concatenate(axis=-1)([mean, var, correlations])
+    """
     x = tf.keras.layers.Concatenate(axis=-1)([mean, var])
 
     return x, gru_fc_state_outputs, gru_cnn_state_outputs
 
 
-def _tf_build_critic_net(x, configuration,agent_speed, road_speed, critic_cnn_gru_states, critic_fc_gru_states):
+def _tf_build_critic_net(x, configuration,agent_speed, road_speed, agent_actions, critic_cnn_gru_states, critic_fc_gru_states):
     # These two lists tell us which layers should be stateful
     critic_rnn_cnn_layers = configuration.get("CRITIC_CNN_GRU_LAYERS") or [0] * 64
     critic_rnn_fc_layers = configuration.get("CRITIC_FC_GRU_LAYERS") or [0] * 64
@@ -223,11 +251,11 @@ def _tf_build_critic_net(x, configuration,agent_speed, road_speed, critic_cnn_gr
             x = tf.keras.layers.Conv2D(**critic_cnn_layer_params)(x)
 
     x = tf.keras.layers.Flatten()(x)
-    agent_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
-    road_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
-    add_both = tf.keras.layers.Concatenate(axis=-1)([road_speed,agent_speed])
-    dense_both = tf.keras.layers.Dense(units=32, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_both)
-    x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
+    #agent_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
+    #road_speed = tf.keras.layers.Dense(units=2, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
+    #add_both = tf.keras.layers.Concatenate(axis=-1)([road_speed,agent_speed])
+    #dense_both = tf.keras.layers.Dense(units=32, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_both)
+    #x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
     
     # Append critic FC layers to graph
     gru_fc_state_outputs = []
@@ -250,13 +278,19 @@ def _tf_build_critic_net(x, configuration,agent_speed, road_speed, critic_cnn_gr
             gru_fc_state_outputs.append(state)
         else:
             x = tf.keras.layers.Dense(**critic_layer_params)(x)
+    
+    agent_speed = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_speed)
+    road_speed = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(road_speed)
+    agent_actions = tf.keras.layers.Dense(units=5, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(agent_actions)
 
+    add_all = tf.keras.layers.Concatenate(axis=-1)([x,road_speed,agent_speed, agent_actions])
+    #x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
+    print("Tief drinne shape Critic: ",add_all.shape)
+    x = tf.keras.layers.Dense(units=50, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_all)    
+
+    #x = tf.keras.layers.Concatenate(axis=-1)([x, dense_both])
+    #x = tf.keras.layers.Dense(units=64, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(x)
     value_func = tf.keras.layers.Dense(1, name='value', kernel_initializer=configuration['INITIALIZER'],
                                        kernel_regularizer=configuration['REGULARIZER'])(x)
 
     return value_func, gru_fc_state_outputs, gru_cnn_state_outputs
-
-
-
-
-
