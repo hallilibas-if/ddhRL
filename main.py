@@ -5,7 +5,7 @@ from rllib_config import cust_config
 from time import sleep
 import numpy as np
 import os
-from train_constants import YOUR_ROOT
+from train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME
 
 #configs
 config.update(cust_config)
@@ -26,6 +26,12 @@ print(ray.init(num_gpus=NUM_GPUS,
             namespace="rllib_carla",
             local_mode=LOCAL_MODE))
 
+trial_counter = 0
+
+def trial_name_str_creator(trial):
+    global trial_counter
+    trial_counter = trial_counter + 1
+    return EXPERIMENT_NAME + "_trial_no_" + str(trial_counter)
 
 @ray.remote(num_cpus=2)
 class buffer_com(object):
@@ -84,7 +90,7 @@ class buffer_com(object):
         return self.agent_obs[ID], self.agent_scalarInput[ID],self.rewards[ID], self.done[ID], self.key[ID]
 
 
-sard_buffer=buffer_com.options(name="carla_com",max_concurrency=2*NUM_AGENTS).remote() #ToDo Shawan change max_concurrency to 2*agent_number
+sard_buffer=buffer_com.options(name="carla_com",max_concurrency=2*NUM_AGENTS).remote() 
 
 
 # Tune is the system for keeping track of all of the running jobs, originally for
@@ -93,4 +99,13 @@ tune.registry.register_trainable(YOUR_ROOT, YourTrainer)
 stop = {
         "training_iteration": NUM_ITERATIONS  # Each iteration is some number of episodes
         }
-results = tune.run(YOUR_ROOT, stop=stop, config=config, verbose=1, checkpoint_freq=10)
+results = tune.run(YOUR_ROOT,
+                   local_dir=logdir, 
+                   stop=stop, 
+                   config=config, 
+                   verbose=1, 
+                   checkpoint_freq=50,
+                   restore=RESTORE_PATH,
+                   resume=RESUME,
+                   trial_name_creator=trial_name_str_creator,
+                   trial_dirname_creator=trial_name_str_creator)
