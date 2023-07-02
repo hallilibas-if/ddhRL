@@ -9,7 +9,7 @@ from ray.rllib.models import ModelCatalog
 from CustomModel import CustomTFModel
 from ray.rllib.models.tf.tf_action_dist import DiagGaussian
 from environments.carla import carlaSimulatorInterfaceEnv
-from train_constants import YOUR_ROOT, PATH_ENCODER
+from utils.train_constants import YOUR_ROOT, PATH_ENCODER
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)

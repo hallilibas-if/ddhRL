@@ -5,7 +5,7 @@ from rllib_config import cust_config
 from time import sleep
 import numpy as np
 import os
-from train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME
+from utils.train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME
 
 #configs
 config.update(cust_config)

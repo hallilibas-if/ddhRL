@@ -6,7 +6,7 @@ import os
 import datetime
 
 
-EXPERIMENT_NAME = "1action_4agents_yolo_NIPS"
+EXPERIMENT_NAME = "DDHRL_Test_Training"
 root = "/home/shawan/Desktop/Shawan/ddhRL"
 
 logdir = root + '/results'

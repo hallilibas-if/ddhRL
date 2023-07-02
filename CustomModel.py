@@ -9,19 +9,19 @@ from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from TFModel import _tf_build_networks
 import numpy as np
 from ray.rllib.policy.view_requirement import ViewRequirement
+from utils.tensorboard_writer import tensorboard_writer
 
 class CustomTFModel(TFModelV2):
     """
-    A TFModelV2 Policy model that uses the neural network structure proposed in Angelo's project.
-    See: https://github.com/ray-project/ray/blob/master/rllib/examples/custom_keras_model.py
+    A TFModelV2 Policy model that uses the neural network structure proposed in our papers.
     """
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         super(CustomTFModel, self).__init__(obs_space, action_space, num_outputs, model_config, name)
-
-        # For logging actions mean an variance
         self.configuration = model_config["custom_model_config"]
-        print("Shawan: ", self.configuration)
+        # For logging actions mean an variance
+        self.write_tensorboard = tensorboard_writer(self.configuration)
+
         build_networks = _tf_build_networks
 
         self.last_value_output = None  # Lazy init for most recent value of a forward pass
@@ -29,9 +29,6 @@ class CustomTFModel(TFModelV2):
         self.dpc_encoder, self.actor_critic_shared_model, self.actor_model, self.critic_model = build_networks(self.configuration)
         
         self.input_name = self.dpc_encoder.get_inputs()[0].name
-        #     logger.info("DPC Weights loaded from path: " + str(path))
-        # else:
-        #     logger.warn("No weights found to load from path: " + str(path))
 
         self.save_dummy = tf.keras.Model([self.dpc_encoder, self.actor_model, self.critic_model])
 
@@ -138,14 +135,16 @@ class CustomTFModel(TFModelV2):
 
         #Here sensor fusion have to be happens ToDoShawan
   
-
+  
         logits = tf.concat(self.actor_model([feature_map,stacked_1,stacked_2, stacked_3]), axis=1, name="Concat_logits")
         #print("Actions: ", logits)
         #print("Output of the actor: ", logits.shape)
 
         self.last_value_output = tf.reshape(self.critic_model([feature_map,stacked_1,stacked_2, stacked_3]), [-1])
 
+        self.write_tensorboard.write(logits=logits)
         return logits, []  # [] is empty state
+    
 
     def value_function(self):
         """
