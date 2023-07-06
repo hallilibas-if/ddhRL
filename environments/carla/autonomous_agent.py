@@ -152,7 +152,7 @@ class Agent(gym.Env):
                 raw_speed=0 
             self.speedLimit = raw_speed + self.rand_speed_coeff * 0.25
             self.current_speed= scalarInput[1]
-            self.tagetSpeed_conductor = tSpeed
+            self.tagetSpeed_conductor = tSpeed[0]
 
         
         #im = im[20:205, (360 - 244) // 2:(360 + 224) // 2]  # result is ~ 180x180
@@ -173,8 +173,8 @@ class Agent(gym.Env):
         This function interacts with the controller agent.
         """      
         scalarArray = np.zeros((self.width, self.height,1))
-        scalarArray[0:8,0:8]= np.full((8,8,1),round((self.tagetSpeed_conductor-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.
-        scalarArray[8:16,8:16]= np.full((8,8,1),round((self.current_speed-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.
+        scalarArray[0:8,0:8]=     np.full((8,8,1), round((self.tagetSpeed_conductor-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.
+        scalarArray[8:16,8:16]=   np.full((8,8,1), round((self.current_speed-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.
         scalarArray[16:24,16:24]= np.full((8,8,1), round(self.acceleration ,1))
         obs = np.concatenate((self.im,scalarArray), axis=-1)
         obs = obs.astype(np.float32)

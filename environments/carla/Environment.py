@@ -63,12 +63,16 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
 
         print("Action dictionary: ", action_dict)
         for _id, action in action_dict.items():   
-            if not (_id%2): # if _id is 0 or 2 
-                obss[_id], rewards[_id], done[_id] = self.agents[_id]._get_observation_conductor(action, action_dict[_id+1])
+            if not (_id%2) and (_id+1) in action_dict:  # if _id is 0 or 2 
+                if _id>0:
+                    agent_ID=_id-1
+                else:
+                    agent_ID=0
+                obss[_id], rewards[_id], done[_id] = self.agents[agent_ID]._get_observation_conductor(action, action_dict[_id+1])
                 if done[_id]:
                     self.dones.add(_id)
                 
-                obss[_id+1], rewards[_id+1], done[_id+1] = self.agents[_id]._get_observation_controller(action_dict[_id+1])
+                obss[_id+1], rewards[_id+1], done[_id+1] = self.agents[agent_ID]._get_observation_controller()
                 if done[_id+1]:
                     self.dones.add(_id+1)
         
