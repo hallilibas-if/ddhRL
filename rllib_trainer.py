@@ -16,6 +16,7 @@ from ray.rllib.execution.metric_ops import StandardMetricsReporting
 from ray.rllib.agents.ppo import ppo
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import TrainerConfigDict
+from utils.train_constants import RESTORE_PATH
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 # PPO default config builds on DEFAULT_CONFIG here
@@ -27,9 +28,10 @@ config.update(
     {
     # The batch size collected for each worker
     "rollout_fragment_length": 64,
+    "num_cpus_per_worker": 3,
     # Can be "complete_episodes" or "truncate_episodes"
     "batch_mode": "truncate_episodes",
-    "HORIZON": 64,
+    "horizon": 64,
     "simple_optimizer": True,
     "framework": "tf2",
     "train_batch_size" : 640,
@@ -47,6 +49,10 @@ config.update(
     "kl_coeff" : 0.3
     })
 
+if RESTORE_PATH != "" or RESTORE_PATH != None:
+    config.update({
+        "kl_coeff" : 0.03
+    })
 
 class YourTrainer(PPOTrainer):
     @classmethod

@@ -17,4 +17,4 @@ PATH_ENCODER =  root + "/offline_trained_encoder/yolo-intermediary.onnx"
 
 # In case you want to restore form checkpoint
 RESUME = False
-RESTORE_PATH ="/home/shawan/Desktop/Shawan/ddhRL/results/run_2023-07-01-23-46/_home_shawan_Desktop_Shawan_ddhRL_results_run_2023-07-01-23-46_carlaSimulatorInterfaceEnv_cad69_00000_0_2023-07-01_23-46-53/checkpoint_000020"
+RESTORE_PATH ="/home/shawan/Desktop/Shawan/ddhRL/results/run_2023-07-03-07-42/DDHRL_Test_Training_trial_no_2/checkpoint_000150"

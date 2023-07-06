@@ -14,7 +14,7 @@ LOCAL_MODE = False # in local mode you can debug it. When False then agent is no
 from environments.carla.Environment import NUM_AGENTS
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 NUM_GPUS=1
-NUM_CPUS=6
+NUM_CPUS=7
 OBJECT_STORE_MEMORY=30000000000 #30GB
 RUN_WITH_TUNE = True
 NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
@@ -32,6 +32,7 @@ def trial_name_str_creator(trial):
     global trial_counter
     trial_counter = trial_counter + 1
     return EXPERIMENT_NAME + "_trial_no_" + str(trial_counter)
+
 
 @ray.remote(num_cpus=2)
 class buffer_com(object):
@@ -79,7 +80,7 @@ class buffer_com(object):
         time_ran=0
         while self.mutexObs[ID]==0:
             sleep(0.01)
-            if time_ran == 15000 or (self.key[ID]!= key and key!=0):
+            if time_ran >= 30000 or (self.key[ID]!= key and key!=0):
                 self.done[ID]=True 
                 self.agent_obs[ID] = np.zeros((182, 182, 3))
                 self.agent_scalarInput[ID] = {}

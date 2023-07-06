@@ -128,7 +128,6 @@ policies = get_multiagent_policies()
 cust_config = {
         "simple_optimizer": True,
         "ignore_worker_failures": True,
-        "batch_mode": "complete_episodes",
         "env": carlaSimulatorInterfaceEnv,
         "env_config": {
             "OUTPUTS": 2,
