@@ -5,19 +5,15 @@ from rllib_config import cust_config
 from time import sleep
 import numpy as np
 import os
-from utils.train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME
+from utils.train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME, NUM_GPUS, NUM_CPUS, NUM_AGENTS, NUM_ITERATIONS
 
 #configs
 config.update(cust_config)
 config['num_workers'] = 0   # when running on a big machine or multiple machines can run more workers
 LOCAL_MODE = False # in local mode you can debug it. When False then agent is not finding ./results
-from environments.carla.Environment import NUM_AGENTS
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-NUM_GPUS=1
-NUM_CPUS=7
 OBJECT_STORE_MEMORY=30000000000 #30GB
-RUN_WITH_TUNE = True
-NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
+
 
 
 print(ray.init(num_gpus=NUM_GPUS,

@@ -19,12 +19,11 @@ def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
     """
     Maps agent_id to policy_id
     """
-    if agent_id <=3:
+    if not (agent_id % 2): # Accepted IDs are 0,2,4,...
         return 'high_level_policy'
-    elif agent_id>=4:
-        return 'low_level_policy'
     else:
-        raise RuntimeError(f'Invalid agent_id: {agent_id}')
+        return 'low_level_policy' # prime numbers such as 1,3 ... are assignt to low_level_policy
+    
 
 
 def get_multiagent_policies() -> Dict[str,PolicySpec]:
@@ -90,7 +89,7 @@ nn_config_high = {
         "CRITIC_CNN_GRU_LAYERS": [0, 0, 0],
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
-        "OUTPUTS": 2,
+        "OUTPUTS": 1,
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }

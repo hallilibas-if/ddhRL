@@ -140,8 +140,10 @@ class Agent(gym.Env):
         Makes API call to simulator to capture a camera image which is saved to disk,
         loads the captured image from disk and returns it as an observation.
         """
+        print("I am conductor agent {} and my action is {}".format(self._id, actions))
         self._processActions(actions)
-        ID = self._id/2
+        print("And for conductor agent {} are the processed actions {}".format(self._id, [self.control.steering,self.control.throttle,self.control.braking]))
+        ID = int(self._id/2)
 
         im, scalarInput, self.analytics_CARLA, self.done, self.key = ray.get(self.sard_buffer.get_sards.remote(ID, self.key, [self.control.steering,self.control.throttle,self.control.braking]))
         if scalarInput:
