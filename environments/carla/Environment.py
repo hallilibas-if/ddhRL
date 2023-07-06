@@ -9,20 +9,8 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import MultiAgentDict
 logger = logging.getLogger(__name__)
 from environments.carla.autonomous_agent import Agent
+from utils.train_constants import NUM_AGENTS
 
-NUM_AGENTS = 4
-
-# Care for the following lines in rollout_worker...
-# if not isinstance(real_env, (ExternalEnv, ExternalMultiAgentEnv)):
-#     logger.info(
-#         "The env you specified is not a supported (sub-)type of "
-#         "ExternalEnv. Attempting to convert it automatically to "
-#         "ExternalEnv.")
-#
-#     if isinstance(real_env, MultiAgentEnv):
-#         external_cls = ExternalMultiAgentEnv
-#     else:
-#         external_cls = ExternalEnv
 
 CONFIG = {
     "action_space": spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32),  # steering, throttle (+) / brake (-)
@@ -41,18 +29,17 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
         self.dones = set()
         self.agents = []
         for i in range(NUM_AGENTS):
-            self.agents.append(Agent(self.config, i))
+            j=i*2
+            self.agents.append(Agent(self.config, j))
 
         # Reset entire env every this number of step calls.
         self.episode_horizon = 64#config['HORIZON']  # config['ROLLOUT_FRAGMENT_LENGTH']
         # Keep track of how many times we have called `step` so far.
         self.episode_timesteps = 0
-        print("WARRNING COMPLETE INITIALIZATION !!!")
-        #atexit.register(self.close)
     def step(
             self, action_dict: MultiAgentDict
     ) -> Tuple[MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict]:
-        """Performs one multi-agent step through LGLSVL
+        """Performs one multi-agent step through CARLA
 
         Args:
             action_dict (dict): Multi-agent action dict
@@ -74,11 +61,16 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
         infos = dict()
         done["__all__"] = False # this is important. Because you have soft and hard dones! If __all__ is True only then the env will be resetted 
 
-        for _id, action in action_dict.items():
-            obss[_id], rewards[_id], done[_id] = self.agents[_id]._get_observation(action)
-            if done[_id]:
-                self.dones.add(_id)
-        #print("Debug done: ",done ) # Debug done:  {'__all__': False} #Debug done:  {'__all__': False, 0: True}
+        print("Action dictionary: ", action_dict)
+        for _id, action in action_dict.items():   
+            if _id%2:  
+                obss[_id], rewards[_id], done[_id] = self.agents[_id]._get_observation_conductor(action, action_dict[_id+1])
+                if done[_id]:
+                    self.dones.add(_id)
+                
+                obss[_id+1], rewards[_id+1], done[_id+1] = self.agents[_id]._get_observation_conductor(action_dict[_id+1])
+                if done[_id+1]:
+                    self.dones.add(_id+1)
         
         done["__all__"] = len(self.dones) == len(self.agents) #  ToDo: Not needed anymore. If dones list are as long as agents list then True --> Finally done["__all__"] is equal True
         return obss, rewards, done, infos
@@ -87,10 +79,13 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
     def reset(self) -> MultiAgentDict:
         obss = dict()
         self.dones = set()
-        for _id, agent in enumerate(self.agents):
+        for agent in self.agents:
+            _id = agent._id
             print("resetting agent:", _id)
             obss[_id] = agent.reset()
-        #showImage(obss[0], "ResetScreen")
+            _id_next = _id+1
+            print("resetting agent:", _id_next )
+            obss[_id_next] = obss[_id]
         return obss
 
     def close(self):
