@@ -7,7 +7,7 @@ import datetime
 
 
 EXPERIMENT_NAME = "DDHRL_Test_Training"
-root = "/home/home/code/ddhRL"
+root = "/home/shawan/Desktop/Shawan/ddhRL"
 
 logdir = root + '/results'
 path_experiment = "run_" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
@@ -19,7 +19,7 @@ PATH_ENCODER =  root + "/offline_trained_encoder/yolo-intermediary.onnx"
 NUM_GPUS=1
 NUM_CPUS=7
 NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
-NUM_AGENTS = 2
+NUM_AGENTS = 4
 
 # In case you want to restore form checkpoint
 RESUME = False

@@ -157,7 +157,7 @@ class Agent(gym.Env):
         
         #im = im[20:205, (360 - 244) // 2:(360 + 224) // 2]  # result is ~ 180x180
         im = cv2.resize(im, (self.width, self.height))
-        showImage(im, str(self._id))
+        showImage(im, str(ID))
         self.im = (im / (128.0))-1.0
         scalarArray = np.zeros((self.width, self.height,1))
         scalarArray[0:8,0:8]= np.full((8,8,1),round((self.speedLimit-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.

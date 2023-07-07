@@ -197,7 +197,7 @@ def _tf_build_actor_net(x, configuration, agent_speed, road_speed, agent_actions
     print("Tief drinne shape Actor: ",add_all.shape)
     x = tf.keras.layers.Dense(units=50, kernel_initializer="he_normal", kernel_regularizer="l1_l2", activation='relu')(add_all)         
     mean = tf.keras.layers.Dense(configuration["OUTPUTS"],
-                                 activation=tf.nn.tanh,
+                                 activation=configuration['OUT_ACTIVATION'],
                               name='ActorLayer_last_mean',
                               kernel_initializer=normc_initializer(0.01),
                               kernel_regularizer=configuration['REGULARIZER'])(x)

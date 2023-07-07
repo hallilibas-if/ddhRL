@@ -90,6 +90,7 @@ nn_config_high = {
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
         "OUTPUTS": 1,
+        "OUT_ACTIVATION": "linear",
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }
@@ -118,6 +119,7 @@ nn_config_low = {
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
         "OUTPUTS": 2,
+        "OUT_ACTIVATION": "tanh",
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }

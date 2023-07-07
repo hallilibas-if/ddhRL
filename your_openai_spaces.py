@@ -31,8 +31,8 @@ low_level_obs_space =  spaces.Box(
 #************************************************************
 
 high_level_action_space = spaces.Box(
-            low=-1,
-            high=1,
+            low=0,
+            high=20,
             shape=(1,),
             dtype=np.float32
         )  
