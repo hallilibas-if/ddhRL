@@ -57,7 +57,7 @@ class Agent(gym.Env):
         sleep(20)
         with open(self.file_path, 'w', encoding='UTF8') as f:
             writer = csv.writer(f)
-            header = ['Episode Number', 'Key' ,'Collision', 'Wrong lane change', 'Avg. distance to lane center', 'Route completed [%]','Max. distance traveled [steps]', 'Avg. speed compliance','Cumulativ reward']
+            header = ['Episode Number', 'Key' ,'Collision', 'Wrong lane change', 'Avg. distance to lane center', 'Route completed [%]','Max. distance traveled [steps]', 'Avg. speed compliance controller','Avg. speed compliance conductor','Cumulativ reward']
             writer.writerow(header)
             f.close()
 
@@ -65,7 +65,9 @@ class Agent(gym.Env):
         self.routeCompletion = 0
         self.steps = 0
         self.num_episodes = 0
-        self.sumSpeedCompliance=0
+        self.sumSpeedComplianceController = 0
+        self.sumSpeedComplianceConductor = 0
+
         self.episodeReward =0
         self.rand_speed_coeff= np.random.randint(0, 9)
         self.flag_speedLimit = 0
@@ -140,7 +142,7 @@ class Agent(gym.Env):
         Makes API call to simulator to capture a camera image which is saved to disk,
         loads the captured image from disk and returns it as an observation.
         """
-        print("I am conductor agent {} and my action is {}".format(self._id, actions))
+        self.tagetSpeed_conductor = tSpeed[0]
         self._processActions(actions)
         print("And for conductor agent {} are the processed actions {}".format(self._id, [self.control.steering,self.control.throttle,self.control.braking]))
         ID = int(self._id/2)
@@ -152,7 +154,7 @@ class Agent(gym.Env):
                 raw_speed=0 
             self.speedLimit = raw_speed + self.rand_speed_coeff * 0.25
             self.current_speed= scalarInput[1]
-            self.tagetSpeed_conductor = tSpeed[0]
+    
 
         
         #im = im[20:205, (360 - 244) // 2:(360 + 224) // 2]  # result is ~ 180x180
@@ -199,6 +201,7 @@ class Agent(gym.Env):
                 self.reward_collision = rewards["CollisionTest"]
 
         self.reward_difTargetSpeed = abs(self.speedLimit - self.tagetSpeed_conductor)
+        self.sumSpeedComplianceConductor+=self.reward_difTargetSpeed 
                            
         self.reward = -(self.c_collision * self.reward_collision) - (self.c_speed * self.reward_difTargetSpeed)
         self.reward = self.reward/5
@@ -216,7 +219,6 @@ class Agent(gym.Env):
         -CheckKeepLane
         -CheckDiffVelocity
         """
-        self.steps +=1
         if isinstance(rewards, dict):
             if len(rewards)!=0:
                 #self.reward_speedLimit = rewards["CheckDiffVelocity"] #reward_speed_shaping = abs(self.ego.state.speed - 14.) #when reaching the goal speed then no punishment
@@ -231,7 +233,7 @@ class Agent(gym.Env):
 
         
         self.reward_speedLimit = abs(self.tagetSpeed_conductor - self.current_speed)
-        self.sumSpeedCompliance+=self.reward_speedLimit 
+        self.sumSpeedComplianceController+=self.reward_speedLimit 
 
         if self.reward_speedLimit < 0.3:
             self.reward_speedLimit = 0
@@ -352,12 +354,19 @@ class Agent(gym.Env):
 
     def route_statistics(self):
         #ToDo: Distance to the center of the lane must be implemented. Here are some works that deal with this issue: https://github.com/carla-simulator/carla/issues/992
-        if self.sumSpeedCompliance !=0:
-            speed_compliance = self.sumSpeedCompliance/self.steps
+        if self.sumSpeedComplianceConductor !=0:
+            speed_compliance_conductor = self.sumSpeedComplianceConductor/self.steps
         else:
-            speed_compliance =0
+            speed_compliance_conductor =0
 
-        data = [self.num_episodes,self.key, self.reward_collision, self.allWrongChgLane, 0, self.routeCompletion, self.steps, speed_compliance,self.episodeReward]
+        if self.sumSpeedComplianceController !=0:
+            speed_compliance_controller = self.sumSpeedComplianceController/self.steps
+        else:
+            speed_compliance_controller =0
+
+
+
+        data = [self.num_episodes,self.key, self.reward_collision, self.allWrongChgLane, 0, self.routeCompletion, self.steps, speed_compliance_controller,speed_compliance_conductor, self.episodeReward]
         with open(self.file_path, 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
             writer.writerow(data)
