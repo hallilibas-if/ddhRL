@@ -57,7 +57,7 @@ class Agent(gym.Env):
         sleep(20)
         with open(self.file_path, 'w', encoding='UTF8') as f:
             writer = csv.writer(f)
-            header = ['Episode Number', 'Key' ,'Collision', 'Wrong lane change', 'Avg. distance to lane center', 'Route completed [%]','Max. distance traveled [steps]', 'Avg. speed compliance controller','Avg. speed compliance conductor','Cumulativ reward']
+            header = ['Episode Number', 'Key' ,'Collision', 'Wrong lane change', 'Avg. distance to lane center', 'Route completed [%]','Max. distance traveled [steps]', 'Avg. speed compliance controller','Avg. speed compliance conductor','Cumulativ rewardController','Cumulativ rewardConductor']
             writer.writerow(header)
             f.close()
 
@@ -68,7 +68,8 @@ class Agent(gym.Env):
         self.sumSpeedComplianceController = 0
         self.sumSpeedComplianceConductor = 0
 
-        self.episodeReward =0
+        self.episodeRewardConductor = 0
+        self.episodeRewardController = 0
         self.rand_speed_coeff= np.random.randint(0, 9)
         self.flag_speedLimit = 0
         self.acc_controle_coeff= 0.0 #0.8
@@ -109,7 +110,8 @@ class Agent(gym.Env):
             self.routeCompletion = 0
             self.sumSpeedCompliance=0
             self.oldKeepLane = 0
-            self.episodeReward = 0
+            self.episodeRewardConductor = 0
+            self.episodeRewardController = 0
             if self.num_episodes <=0:
                 self.acc_controle_coeff= 0.8 - 0.02 * self.num_episodes 
             else:
@@ -205,7 +207,7 @@ class Agent(gym.Env):
                            
         self.reward = -(self.c_collision * self.reward_collision) - (self.c_speed * self.reward_difTargetSpeed)
         self.reward = self.reward/5
-        self.episodeReward += self.reward
+        self.episodeRewardConductor += self.reward
         return self.reward
 
     def _calculate_reward_controller(self, rewards):
@@ -222,7 +224,6 @@ class Agent(gym.Env):
         if isinstance(rewards, dict):
             if len(rewards)!=0:
                 #self.reward_speedLimit = rewards["CheckDiffVelocity"] #reward_speed_shaping = abs(self.ego.state.speed - 14.) #when reaching the goal speed then no punishment
-                self.reward_collision = rewards["CollisionTest"]
                 self.routeCompletion = rewards["RouteCompletionTest"]  
                 if self.oldKeepLane != rewards["CheckKeepLane"]:
                     self.reward_lane = abs(self.oldKeepLane -rewards["CheckKeepLane"])
@@ -242,7 +243,7 @@ class Agent(gym.Env):
                     
         
 
-        print("Agent has ID {} and is in episode {}".format(self._id,self.num_episodes))
+        print("Agent has ID {} and is in episode {}".format((self._id/2),self.num_episodes))
         print("predicted steering: {}, throttle: {}, braking: {}".format(self.control.steering,self.control.throttle,self.control.braking))
         print("Used self.acc_controle_coeff", self.acc_controle_coeff)
         print("Agents current speed is: ", self.current_speed)
@@ -262,7 +263,7 @@ class Agent(gym.Env):
      
         self.reward = -(self.c_collision * self.reward_collision) - (self.c_lane * self.reward_lane) - (self.c_speed * self.reward_speedLimit)
         self.reward = self.reward/5
-        self.episodeReward += self.reward
+        self.episodeRewardController += self.reward
         return self.reward
     
     def _processActions(self,action):
@@ -366,7 +367,7 @@ class Agent(gym.Env):
 
 
 
-        data = [self.num_episodes,self.key, self.reward_collision, self.allWrongChgLane, 0, self.routeCompletion, self.steps, speed_compliance_controller,speed_compliance_conductor, self.episodeReward]
+        data = [self.num_episodes,self.key, self.reward_collision, self.allWrongChgLane, 0, self.routeCompletion, self.steps, speed_compliance_controller,speed_compliance_conductor, self.episodeRewardController,self.episodeRewardConductor]
         with open(self.file_path, 'a', encoding='UTF8') as f:
             writer = csv.writer(f)
             writer.writerow(data)

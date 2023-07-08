@@ -73,7 +73,7 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
                 if done[_id+1]:
                     self.dones.add(_id+1)
         
-        done["__all__"] = len(self.dones) == len(self.agents) #  ToDo: Not needed anymore. If dones list are as long as agents list then True --> Finally done["__all__"] is equal True
+        done["__all__"] = len(self.dones) == len(self.agents)*2 #  ToDo: Not needed anymore. If dones list are as long as agents list then True --> Finally done["__all__"] is equal True
         return obss, rewards, done, infos
 
 

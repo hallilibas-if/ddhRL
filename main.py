@@ -76,7 +76,7 @@ class buffer_com(object):
         time_ran=0
         while self.mutexObs[ID]==0:
             sleep(0.01)
-            if time_ran >= 30000 or (self.key[ID]!= key and key!=0):
+            if time_ran >= 38000 or (self.key[ID]!= key and key!=0):
                 self.done[ID]=True 
                 self.agent_obs[ID] = np.zeros((182, 182, 3))
                 self.agent_scalarInput[ID] = {}
