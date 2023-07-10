@@ -83,11 +83,16 @@ class Agent(gym.Env):
         self.reward_difTargetSpeed = 0
         self.reward_collision = 0
         self.reward_lane = 0
-        self.reward_action = 0
+
+        #Constants for conductor
         self.c_collision = 30.
+        self.c_speed= 0.1 #0.14 #0.06
+        
+        #Constants for controller
+        self.c_col_controller = 20.
         self.c_lane = 2 #2 #0.8
-        self.c_action = 0#0.05
-        self.c_speed= 0.05 #0.14 #0.06
+        self.c_speed_controller= 0.2
+ 
         self.done = False
         self.acc0_old= 0
         self.acc1_old= 0
@@ -105,6 +110,8 @@ class Agent(gym.Env):
         if self.done:
             self.route_statistics()
             self.steps = 0
+            self.sumSpeedComplianceController = 0
+            self.sumSpeedComplianceConductor = 0
             self.num_episodes += 1
             self.allWrongChgLane=0
             self.routeCompletion = 0
@@ -128,7 +135,6 @@ class Agent(gym.Env):
         self.reward_difTargetSpeed
         self.reward_collision = 0
         self.reward_lane = 0
-        self.reward_action = 0
         self.done = False
         #self.rand_speed_coeff= np.random.randint(0, 9) #Totest if the agent can adjust the speed to new targets. Till know not working
 
@@ -146,10 +152,8 @@ class Agent(gym.Env):
         """
         self.tagetSpeed_conductor = tSpeed[0]
         self._processActions(actions)
-        print("And for conductor agent {} are the processed actions {}".format(self._id, [self.control.steering,self.control.throttle,self.control.braking]))
-        ID = int(self._id/2)
-
-        im, scalarInput, self.analytics_CARLA, self.done, self.key = ray.get(self.sard_buffer.get_sards.remote(ID, self.key, [self.control.steering,self.control.throttle,self.control.braking]))
+        
+        im, scalarInput, self.analytics_CARLA, self.done, self.key = ray.get(self.sard_buffer.get_sards.remote(self._id, self.key, [self.control.steering,self.control.throttle,self.control.braking]))
         if scalarInput:
             raw_speed= scalarInput[0]/10
             if raw_speed <0:
@@ -161,7 +165,7 @@ class Agent(gym.Env):
         
         #im = im[20:205, (360 - 244) // 2:(360 + 224) // 2]  # result is ~ 180x180
         im = cv2.resize(im, (self.width, self.height))
-        showImage(im, str(ID))
+        showImage(im, str(self._id))
         self.im = (im / (128.0))-1.0
         scalarArray = np.zeros((self.width, self.height,1))
         scalarArray[0:8,0:8]= np.full((8,8,1),round((self.speedLimit-4)/8 ,1) ) #ToDo Change the way the normalization "-4" was implemented.
@@ -204,9 +208,14 @@ class Agent(gym.Env):
 
         self.reward_difTargetSpeed = abs(self.speedLimit - self.tagetSpeed_conductor)
         self.sumSpeedComplianceConductor+=self.reward_difTargetSpeed 
-                           
+
+        if self.tagetSpeed_conductor>self.speedLimit:
+            self.reward_difTargetSpeed = 3 * self.reward_difTargetSpeed
+        elif self.tagetSpeed_conductor < 0.1 and self.speedLimit > 0.5:#(self.current_speed < 0.1 and self.flag_speedLimit==0) or (self.current_speed > 0.1 and self.flag_speedLimit>0):
+            self.reward_difTargetSpeed = 5 *self.reward_difTargetSpeed
+
         self.reward = -(self.c_collision * self.reward_collision) - (self.c_speed * self.reward_difTargetSpeed)
-        self.reward = self.reward/5
+        self.reward = self.reward/10
         self.episodeRewardConductor += self.reward
         return self.reward
 
@@ -238,31 +247,30 @@ class Agent(gym.Env):
 
         if self.reward_speedLimit < 0.3:
             self.reward_speedLimit = 0
-        elif self.current_speed < 0.1:#(self.current_speed < 0.1 and self.flag_speedLimit==0) or (self.current_speed > 0.1 and self.flag_speedLimit>0):
+        elif self.current_speed < 0.1 and self.tagetSpeed_conductor > 0.5:#(self.current_speed < 0.1 and self.flag_speedLimit==0) or (self.current_speed > 0.1 and self.flag_speedLimit>0):
             self.reward_speedLimit = 5 *self.reward_speedLimit
                     
         
 
-        print("Agent has ID {} and is in episode {}".format((self._id/2),self.num_episodes))
+        print("Agent has ID {} and is in episode {}".format(self._id,self.num_episodes))
         print("predicted steering: {}, throttle: {}, braking: {}".format(self.control.steering,self.control.throttle,self.control.braking))
         print("Used self.acc_controle_coeff", self.acc_controle_coeff)
         print("Agents current speed is: ", self.current_speed)
         print("The target speed limit is (conductor): ", self.tagetSpeed_conductor)
         print("The road speed limit is (CARLA): ", self.speedLimit)
         print("Previous acceleration was: ", self.acceleration)
-        self.reward_action = abs(self.control.steering)
     
         print({'reward_type': ['coefficient', 'reward_value(not weighted)', 'reward_value_weighted'],
-               'collision': [self.c_collision, self.reward_collision, self.c_collision * self.reward_collision],
-               'lane': [self.c_lane, self.reward_lane, self.c_lane * self.reward_lane],
-               'action': [self.c_action, self.reward_action, self.c_action * self.reward_action],
-               'target Speed': [self.c_speed, self.tagetSpeed_conductor, self.c_speed * self.tagetSpeed_conductor],
-               'speedDiff': [self.c_speed, self.reward_speedLimit, self.c_speed * self.reward_speedLimit]
+               'collision Conductor': [self.c_collision, self.reward_collision, self.c_collision * self.reward_collision],
+               'speedDiff Conductor': [self.c_speed, self.reward_difTargetSpeed, self.c_speed * self.reward_difTargetSpeed],
+               'lane Controller': [self.c_lane, self.reward_lane, self.c_lane * self.reward_lane],
+               'collision Controller': [self.c_col_controller, self.reward_collision, self.c_col_controller * self.reward_collision],
+               'speedDiff Controller': [self.c_speed_controller, self.reward_speedLimit, self.c_speed_controller * self.reward_speedLimit]
                })
          
      
-        self.reward = -(self.c_collision * self.reward_collision) - (self.c_lane * self.reward_lane) - (self.c_speed * self.reward_speedLimit)
-        self.reward = self.reward/5
+        self.reward = -(self.c_col_controller * self.reward_collision) - (self.c_lane * self.reward_lane) - (self.c_speed_controller * self.reward_speedLimit)
+        self.reward = self.reward/10
         self.episodeRewardController += self.reward
         return self.reward
     

@@ -9,17 +9,17 @@ from ray.rllib.models import ModelCatalog
 from CustomModel import CustomTFModel
 from ray.rllib.models.tf.tf_action_dist import DiagGaussian
 from environments.carla import carlaSimulatorInterfaceEnv
-from utils.train_constants import YOUR_ROOT, PATH_ENCODER
+from utils.train_constants import YOUR_ROOT, PATH_ENCODER, GPU_ID, NUM_AGENTS
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = GPU_ID
 def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
     """
     Maps agent_id to policy_id
     """
-    if not (agent_id % 2): # Accepted IDs are 0,2,4,...
+    if agent_id < NUM_AGENTS: # Accepted IDs are 0,1,2,... NUM_AGENTS
         return 'high_level_policy'
     else:
         return 'low_level_policy' # prime numbers such as 1,3 ... are assignt to low_level_policy

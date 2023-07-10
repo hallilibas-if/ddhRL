@@ -20,6 +20,7 @@ NUM_GPUS=1
 NUM_CPUS=7
 NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
 NUM_AGENTS = 4
+GPU_ID = '0' # Cuda visible device/gpu
 
 # In case you want to restore form checkpoint
 RESUME = False

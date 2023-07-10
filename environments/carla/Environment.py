@@ -29,11 +29,10 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
         self.dones = set()
         self.agents = []
         for i in range(NUM_AGENTS):
-            j=i*2
-            self.agents.append(Agent(self.config, j))
+            self.agents.append(Agent(self.config, i))
 
         # Reset entire env every this number of step calls.
-        self.episode_horizon = 64#config['HORIZON']  # config['ROLLOUT_FRAGMENT_LENGTH']
+        self.episode_horizon = 64 #config['horizon']  # config['ROLLOUT_FRAGMENT_LENGTH']
         # Keep track of how many times we have called `step` so far.
         self.episode_timesteps = 0
     def step(
@@ -63,15 +62,14 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
 
         print("Action dictionary: ", action_dict)
         for _id, action in action_dict.items():   
-            if not (_id%2) and (_id+1) in action_dict:  # if _id is 0 or 2 
-                agent_ID=int(_id/2)
-                obss[_id], rewards[_id], done[_id] = self.agents[agent_ID]._get_observation_conductor(action, action_dict[_id+1])
+            if _id<NUM_AGENTS and (_id+NUM_AGENTS) in action_dict:  # if _id is 0 or 2 
+                obss[_id], rewards[_id], done[_id] = self.agents[_id]._get_observation_conductor(action, action_dict[_id+NUM_AGENTS])
                 if done[_id]:
                     self.dones.add(_id)
                 
-                obss[_id+1], rewards[_id+1], done[_id+1] = self.agents[agent_ID]._get_observation_controller()
-                if done[_id+1]:
-                    self.dones.add(_id+1)
+                obss[_id+NUM_AGENTS], rewards[_id+NUM_AGENTS], done[_id+NUM_AGENTS] = self.agents[_id]._get_observation_controller()
+                if done[_id+NUM_AGENTS]:
+                    self.dones.add(_id+NUM_AGENTS)
         
         done["__all__"] = len(self.dones) == len(self.agents)*2 #  ToDo: Not needed anymore. If dones list are as long as agents list then True --> Finally done["__all__"] is equal True
         return obss, rewards, done, infos
@@ -84,7 +82,7 @@ class carlaSimulatorInterfaceEnv(MultiAgentEnv):
             _id = agent._id
             print("resetting agent:", _id)
             obss[_id] = agent.reset()
-            _id_next = _id+1
+            _id_next = _id+NUM_AGENTS
             print("resetting agent:", _id_next )
             obss[_id_next] = obss[_id]
         return obss
