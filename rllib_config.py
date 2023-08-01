@@ -2,14 +2,13 @@ from typing import Dict
 
 from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.algorithms.ppo import PPOConfig
-from rllib_policy import YourHighLevelPolicy,YourLowLevelPolicy
 from your_openai_spaces import high_level_obs_space, high_level_action_space, \
     low_level_obs_space,low_level_action_space
 from ray.rllib.models import ModelCatalog
-from CustomModel import CustomTFModel
+from models.CustomModel import CustomTFModel
 from ray.rllib.models.tf.tf_action_dist import DiagGaussian
 from environments.carla import carlaSimulatorInterfaceEnv
-from utils.train_constants import YOUR_ROOT, PATH_ENCODER, GPU_ID, NUM_AGENTS
+from train_constants import YOUR_ROOT, PATH_ENCODER, GPU_ID, NUM_AGENTS
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)

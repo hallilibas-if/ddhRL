@@ -89,9 +89,9 @@ class Agent(gym.Env):
         self.c_speed= 0.1 #0.14 #0.06
         
         #Constants for controller
-        self.c_col_controller = 20.
+        self.c_col_controller = 30.
         self.c_lane = 2 #2 #0.8
-        self.c_speed_controller= 0.2
+        self.c_speed_controller= 0.15
  
         self.done = False
         self.acc0_old= 0
@@ -150,7 +150,7 @@ class Agent(gym.Env):
         Makes API call to simulator to capture a camera image which is saved to disk,
         loads the captured image from disk and returns it as an observation.
         """
-        self.tagetSpeed_conductor = tSpeed[0]
+        self.tagetSpeed_conductor = 0.5*tSpeed[0] + 0.5*self.tagetSpeed_conductor
         self._processActions(actions)
         
         im, scalarInput, self.analytics_CARLA, self.done, self.key = ray.get(self.sard_buffer.get_sards.remote(self._id, self.key, [self.control.steering,self.control.throttle,self.control.braking]))
@@ -269,7 +269,7 @@ class Agent(gym.Env):
                })
          
      
-        self.reward = -(self.c_col_controller * self.reward_collision) - (self.c_lane * self.reward_lane) - (self.c_speed_controller * self.reward_speedLimit)
+        self.reward = 1 -(self.c_col_controller * self.reward_collision) - (self.c_lane * self.reward_lane) - (self.c_speed_controller * self.reward_speedLimit)
         self.reward = self.reward/10
         self.episodeRewardController += self.reward
         return self.reward

@@ -9,7 +9,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.utils.typing import MultiAgentDict
 logger = logging.getLogger(__name__)
 from environments.carla.autonomous_agent import Agent
-from utils.train_constants import NUM_AGENTS
+from train_constants import NUM_AGENTS
 
 
 CONFIG = {

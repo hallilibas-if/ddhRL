@@ -16,7 +16,7 @@ from ray.rllib.execution.metric_ops import StandardMetricsReporting
 from ray.rllib.agents.ppo import ppo
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import TrainerConfigDict
-from utils.train_constants import RESTORE_PATH, GPU_ID
+from train_constants import RESTORE_PATH, GPU_ID
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = GPU_ID
 # PPO default config builds on DEFAULT_CONFIG here

@@ -24,4 +24,4 @@ GPU_ID = '0' # Cuda visible device/gpu
 
 # In case you want to restore form checkpoint
 RESUME = False
-RESTORE_PATH =""
+RESTORE_PATH ="/home/shawan/Desktop/Shawan/ddhRL/results/run_2023-07-23-11-13/DDHRL_Test_Training_trial_no_2/checkpoint_000100"

@@ -5,13 +5,13 @@ from rllib_config import cust_config
 from time import sleep
 import numpy as np
 import os
-from utils.train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME, NUM_GPUS, NUM_CPUS, NUM_AGENTS, NUM_ITERATIONS
+from train_constants import YOUR_ROOT, RESUME , RESTORE_PATH, logdir, EXPERIMENT_NAME, NUM_GPUS, NUM_CPUS, NUM_AGENTS, NUM_ITERATIONS, GPU_ID
 
 #configs
 config.update(cust_config)
 config['num_workers'] = 0   # when running on a big machine or multiple machines can run more workers
 LOCAL_MODE = False # in local mode you can debug it. When False then agent is not finding ./results
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = GPU_ID
 OBJECT_STORE_MEMORY=30000000000 #30GB
 
 
@@ -81,6 +81,7 @@ class buffer_com(object):
                 self.agent_obs[ID] = np.zeros((182, 182, 3))
                 self.agent_scalarInput[ID] = {}
                 self.rewards[ID] = {}
+                break
             time_ran+=1
         self.mutexObs[ID] = 0
         #print("I am agent {} and I got my sards".format(ID))

@@ -6,7 +6,7 @@ import tensorflow as tf
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 import torch.nn as nn
 from ray.rllib.models.tf.tf_modelv2 import TFModelV2
-from TFModel import _tf_build_networks
+from models.TFModel import _tf_build_networks
 import numpy as np
 from ray.rllib.policy.view_requirement import ViewRequirement
 from utils.tensorboard_writer import tensorboard_writer
@@ -84,6 +84,7 @@ class CustomTFModel(TFModelV2):
         stacked_1_m = stacked_scalar[:,:,2:6,2:6] #ToDo Shawan:have to be dynamic! Here its hardcoded!
         stacked_2_m = stacked_scalar[:,:,10:14,10:14] #ToDo Shawan:have to be dynamic! Here its hardcoded!
         stacked_3_m = stacked_scalar[:,:,18:22,18:22] #ToDo Shawan:have to be dynamic! Here its hardcoded!
+        stacked_4_m = stacked_scalar[:,:,18:22,18:22]
 
         stacked_1_m = tf.cast(stacked_1_m, tf.float32)
         stacked_2_m = tf.cast(stacked_2_m, tf.float32)
