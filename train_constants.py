@@ -13,8 +13,15 @@ logdir = root + '/results'
 path_experiment = "run_" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
 YOUR_ROOT= os.path.join(logdir, path_experiment)
 
-PATH_ENCODER =  root + "/offline_trained_encoder/yolo-intermediary.onnx"
+PATH_ENCODER =  root + "/offline_trained_encoder/r18_byol.onnx"
+
+# Training parameters
+NUM_GPUS=2
+NUM_CPUS=7
+NUM_ITERATIONS = 10000  # 500 results in Tensorboard shown with 500 iterations (about an hour)
+NUM_AGENTS = 2
+GPU_ID = '0,1' # Cuda visible device/gpu
 
 # In case you want to restore form checkpoint
 RESUME = False
-RESTORE_PATH ="/home/shawan/Desktop/Shawan/ddhRL/results/run_2023-07-03-07-42/DDHRL_Test_Training_trial_no_2/checkpoint_000150"
+RESTORE_PATH =""

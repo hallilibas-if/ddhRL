@@ -2,29 +2,27 @@ from typing import Dict
 
 from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.algorithms.ppo import PPOConfig
-from rllib_policy import YourHighLevelPolicy,YourLowLevelPolicy
 from your_openai_spaces import high_level_obs_space, high_level_action_space, \
     low_level_obs_space,low_level_action_space
 from ray.rllib.models import ModelCatalog
-from CustomModel import CustomTFModel
+from models.CustomModel_iso import CustomTFModel
 from ray.rllib.models.tf.tf_action_dist import DiagGaussian
 from environments.carla import carlaSimulatorInterfaceEnv
-from utils.train_constants import YOUR_ROOT, PATH_ENCODER
+from train_constants import YOUR_ROOT, PATH_ENCODER, GPU_ID, NUM_AGENTS
 
 ModelCatalog.register_custom_model("our_model", CustomTFModel)
 ModelCatalog.register_custom_action_dist("normal", DiagGaussian)
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = GPU_ID
 def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
     """
     Maps agent_id to policy_id
     """
-    if agent_id <=3:
+    if agent_id < NUM_AGENTS: # Accepted IDs are 0,1,2,... NUM_AGENTS
         return 'high_level_policy'
-    elif agent_id>=4:
-        return 'low_level_policy'
     else:
-        raise RuntimeError(f'Invalid agent_id: {agent_id}')
+        return 'low_level_policy' # prime numbers such as 1,3 ... are assignt to low_level_policy
+    
 
 
 def get_multiagent_policies() -> Dict[str,PolicySpec]:
@@ -69,7 +67,7 @@ def get_multiagent_policies() -> Dict[str,PolicySpec]:
 # see https://github.com/ray-project/ray/blob/releases/1.10.0/rllib/agents/trainer.py
 nn_config_high = {
         "offlineEncoder" : PATH_ENCODER,
-        "NUM_DPC_FRAMES": 4,
+        "NUM_DPC_FRAMES": 1,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,
         "ACTOR_CNN_LAYERS": 2,
@@ -90,14 +88,15 @@ nn_config_high = {
         "CRITIC_CNN_GRU_LAYERS": [0, 0, 0],
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
-        "OUTPUTS": 2,
+        "OUTPUTS": 1,
+        "OUT_ACTIVATION": "linear",
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }
 
 nn_config_low = {
         "offlineEncoder" : PATH_ENCODER,
-        "NUM_DPC_FRAMES": 4,
+        "NUM_DPC_FRAMES": 1,
         "FREEZE_CONV_LAYERS": True,
         "SHARED_CNN_LAYERS": 0,
         "ACTOR_CNN_LAYERS": 2,
@@ -119,6 +118,7 @@ nn_config_low = {
         "CRITIC_FC_GRU_LAYERS": [0, 0, 0],
         "CRITIC_GRU_STATE_SIZES": [512, 256, 128],
         "OUTPUTS": 2,
+        "OUT_ACTIVATION": "tanh",
         "REGULARIZER" : "l1_l2",
         "INITIALIZER" : "he_normal"
 }

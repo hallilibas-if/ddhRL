@@ -16,9 +16,9 @@ from ray.rllib.execution.metric_ops import StandardMetricsReporting
 from ray.rllib.agents.ppo import ppo
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import TrainerConfigDict
-from utils.train_constants import RESTORE_PATH
+from train_constants import RESTORE_PATH, GPU_ID
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = GPU_ID
 # PPO default config builds on DEFAULT_CONFIG here
 # https://github.com/ray-project/ray/blob/releases/1.10.0/rllib/agents/trainer.py
 config = ppo.DEFAULT_CONFIG.copy()
@@ -38,7 +38,7 @@ config.update(
     "disable_env_checking":True,
     "num_sgd_iter" : 3,
     "sgd_minibatch_size": 128,
-    "lr": 0.000005,
+    "lr": 0.000001,
     "no_done_at_end": False,
     "preprocessor_pref": "deepmind",
     "gamma" : 0.9,

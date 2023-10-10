@@ -11,17 +11,17 @@ from gym import spaces
 #************************************************************
 
 high_level_obs_space = spaces.Box(
-            low=-5,
-            high=5,
-            shape=(128, 128, 4),
+            low=-np.inf,
+            high=np.inf,
+            shape=(4, 4, 2049),
             dtype=np.float32
         )  # RGB image from front camera
 
 # At the low level, you don't care about OCEAN, you've already chosen your chicken
 low_level_obs_space =  spaces.Box(
-            low=-5,
-            high=5,
-            shape=(128, 128, 4),
+            low=-np.inf,
+            high=np.inf,
+            shape=(4, 4, 2049),
             dtype=np.float32
         )  # RGB image from front camera
 
@@ -31,9 +31,9 @@ low_level_obs_space =  spaces.Box(
 #************************************************************
 
 high_level_action_space = spaces.Box(
-            low=-1,
-            high=1,
-            shape=(2,),
+            low=0,
+            high=20,
+            shape=(1,),
             dtype=np.float32
         )  
 
